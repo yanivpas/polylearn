@@ -17,15 +17,7 @@ def poly_prod(a, b):
             c[index_a + index_b] += coefficient_a*coefficient_b
     return c;
             
-def inner_prod(vector_a, vector_b):
-    result = 0
-    for a, b in zip(vector_a, vector_b):
-        result = a*b
 
-    return result
-
-def norm(a):
-    return sqrt(inner_prod(a, a))
 
 class Polynomial(object):
     def __init__(self, coefficients_vector):
