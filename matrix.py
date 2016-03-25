@@ -1,6 +1,11 @@
-from math import sqrt 
+from math import sqrt
+from itertools import product
+from copy import deepcopy
+
+EPSILON = 0.00000001
 
 # TODO: if we want to do this module nicely we need to add a vector object and implement scalar mul...
+# TODO: refactor this all file.
 def dot(vector_a, vector_b):
     result = 0
     for a, b in zip(vector_a, vector_b):
@@ -18,13 +23,13 @@ class Matrix(object):
         self.dim = (len(matrix), len(matrix[0]))
 
     def raws(self):
-        return self.matrix
+        return deepcopy(self.matrix)
 
     def colums(self):
         colums = []
         for i in range(self.dim[1]):
             colums.append([raw[i] for raw in self.raws()])
-        return colums
+        return deepcopy(colums)
     
     def transpose(self):
         return Matrix(self.colums())
@@ -41,6 +46,25 @@ class Matrix(object):
             new_matrix.append(new_raw)
 
         return Matrix(new_matrix)
+
+    def mul(self, vector):
+        new_vector = []
+        for raw in self.raws():
+            new_vector.append(dot(raw, vector))
+
+        return new_vector
+
+    def normaize(self):
+        new_matrix = []
+        for raw in self.raws():
+            new_raw = []
+            for value in raw:
+                if abs(value) < EPSILON:
+                    new_raw.append(0)
+                else:
+                    new_raw.append(value)
+            new_matrix.append(new_raw)
+        self.matrix = new_matrix
 
 
 class Vector(object):
@@ -72,21 +96,49 @@ def gramschmidt(vectors):
 
         new_vector = vector + proj
 
-        bais.append(new_vector*(1/norm(new_vector)))
+        if norm(new_vector) < EPSILON:
+            bais.append(Vector([0]*vector.dim))
+        else:
+            e = new_vector*(1/norm(new_vector))
+            bais.append(e)
+
     return [e.vector for e in bais]
 
 def QRdecomposition(matrix):
-    '''
-    for colum in matrix.colums():
-        normal = norm(colum)
-        Q.append([a/normal for a in colum])
-        '''
-
     Q = gramschmidt(matrix.colums())
     Q = Matrix(Q).transpose()
 
     R = Q.transpose()*matrix
-
+    R.normaize()
+    
     return (Q,R)
         
+
+def psudorank(R):
+    rank = 0
+    for raw in R.raws():
+        rank += 1 if norm(raw) != 0 else 0
+    return rank
+
+def solveQR(Q, R, y):
+    y = Q.transpose().mul(y)
+    dim = psudorank(R)
+
+    y = y[:dim]
+    y.reverse()
+    raws = R.raws()[:dim]
+    raws.reverse()
+    b = []
+    for raw, value in zip(raws, y):
+        raw.reverse()
+        raw_len = len([a for a in raw if a != 0])
+        b += [1]*(raw_len-len(b)-1)
+        if (raw[len(b)] != 0):
+            b.append((value -dot(b, raw[:len(b)]))/raw[len(b)])
+        else:
+            b.append(0)
+
+    b.reverse()
+    return b
+            
 
