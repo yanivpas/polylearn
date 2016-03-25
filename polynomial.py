@@ -38,5 +38,5 @@ class Polynomial(object):
             yield a
 
     def __call__(self, value):
-        self.eval(value)
+        return self.eval(value)
 
